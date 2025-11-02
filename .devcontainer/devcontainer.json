@@ -1,5 +1,5 @@
 {
-  "name": "OpenROAD cloud tools",
+  "name": "Openlane Workshop",
   "build": {
     "dockerfile": "Dockerfile"
   },
