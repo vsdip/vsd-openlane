@@ -63,23 +63,6 @@ ENV YOSYS_EXE="/opt/oss-cad-suite/bin/yosys"
 ENV YOSYS_PLUGIN_PATH="/opt/oss-cad-suite/share/yosys/plugins"
 ENV PATH="/opt/oss-cad-suite/bin:/usr/local/bin:${PATH}"
 
-# --- Pull your OpenLane bundle (work.zip) and unpack to Desktop
-# Make the URL overridable so future rebuilds can point to a new zip.
-ARG WORK_ZIP_URL="https://vsd-labs.sgp1.cdn.digitaloceanspaces.com/vsd-labs/work.zip"
-ENV WORK_DEST_DIR="/home/vscode/Desktop"
-RUN set -eux; \
-  mkdir -p "${WORK_DEST_DIR}"; \
-  wget -O /tmp/work.zip "${WORK_ZIP_URL}"; \
-  unzip -o /tmp/work.zip -d "${WORK_DEST_DIR}"; \
-  rm -f /tmp/work.zip; \
-  chown -R ${USERNAME}:${USERNAME} "${WORK_DEST_DIR}/work"
-
-# --- Export PDK_ROOT exactly where you keep the PDKs
-ENV PDK_ROOT="/home/vscode/Desktop/work/tools/openlane_working_dir/pdks"
-
-# --- Make PDK_ROOT available in interactive shells for all users
-RUN echo 'export PDK_ROOT="/home/vscode/Desktop/work/tools/openlane_working_dir/pdks"' > /etc/profile.d/pdk_root.sh
-
 # --- noVNC desktop environment
 COPY supervisord.conf /etc/supervisor/conf.d/vnc.conf
 EXPOSE 6080
