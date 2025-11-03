@@ -1,11 +1,7 @@
 {
-  "name": "OpenROAD + OpenLane workspace",
+  "name": "OpenROAD cloud tools",
   "build": {
-    "dockerfile": "Dockerfile",
-    "args": {
-      // Optional: point to a newer work.zip when you upload one.
-      // "WORK_ZIP_URL": "https://vsd-labs.sgp1.cdn.digitaloceanspaces.com/vsd-labs/work_2025-11-03.zip"
-    }
+    "dockerfile": "Dockerfile"
   },
   "forwardPorts": [6080],
   "portsAttributes": {
@@ -17,8 +13,6 @@
   "overrideCommand": false,
   "remoteUser": "vscode",
   "containerEnv": {
-    "DISPLAY": ":1",
-    "PDK_ROOT": "/home/vscode/Desktop/work/tools/openlane_working_dir/pdks"
-  },
-  "postStartCommand": "ln -sfn \"${containerWorkspaceFolder}\" /openLANE_flow && echo \"Using repo at ${containerWorkspaceFolder} as /openLANE_flow\" && ls -ld /openLANE_flow"
+    "DISPLAY": ":1"
+  }
 }
