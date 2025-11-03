@@ -1,18 +1,15 @@
 {
   "name": "Openlane Workshop",
-  "build": {
-    "dockerfile": "Dockerfile"
-  },
+  "build": { "dockerfile": "Dockerfile" },
   "forwardPorts": [6080],
   "portsAttributes": {
-    "6080": {
-      "label": "noVNC Desktop",
-      "onAutoForward": "openBrowser"
-    }
+    "6080": { "label": "noVNC Desktop", "onAutoForward": "openBrowser" }
   },
   "overrideCommand": false,
   "remoteUser": "root",
   "containerEnv": {
-    "DISPLAY": ":1"
-  }
+    "DISPLAY": ":1",
+    "PDK_ROOT": "/workspaces/work/pdks"
+  },
+  "postCreateCommand": "bash -lc 'if [ ! -e /openLANE_flow ]; then ln -s \"$PWD\" /openLANE_flow; fi'"
 }
