@@ -19,12 +19,6 @@ COPY --from=openlane_src /openlane /openlane
 COPY --from=openlane_src /usr/local /usr/local
 # If the source image has other critical bins/libs, copy them similarly.
 
-# Create vscode user
-ARG USERNAME=vscode
-ARG USER_UID=1000
-ARG USER_GID=${USER_UID}
-RUN groupadd -g ${USER_GID} ${USERNAME} && useradd -m -s /bin/bash -u ${USER_UID} -g ${USER_GID} ${USERNAME} \
- && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME} && chmod 0440 /etc/sudoers.d/${USERNAME}
 
 # Codespaces defaults
 WORKDIR /workspaces
