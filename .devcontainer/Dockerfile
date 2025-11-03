@@ -1,32 +1,26 @@
-# Stage 1: pull OpenLane files from the original image
-FROM efabless/openlane:v0.21 AS openlane_src
+# ------------------------------------------------------------
+# Minimal working Dockerfile using efabless/openlane:v0.21
+# (root user, same behavior as local docker run)
+# ------------------------------------------------------------
 
-# Stage 2: modern, supported base for Codespaces
-FROM ubuntu:22.04
-SHELL ["/bin/bash", "-lc"]
-ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 LC_ALL=C.UTF-8 DISPLAY=:1
+FROM efabless/openlane:v0.21
 
-# Minimal tools for Codespaces + supervisor (if you need VNC)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-      sudo ca-certificates locales supervisor python3 python3-venv \
-      git curl bash make tcl \
-  && sed -i 's/^# *en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen && locale-gen \
-  && apt-get clean && rm -rf /var/lib/apt/lists/*
+# Environment setup
+ENV LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    DISPLAY=:1
 
-# Copy OpenLane stack from the CentOS image
-# (These paths cover OpenLane flow + common tool installs; adjust if needed)
-COPY --from=openlane_src /openlane /openlane
-COPY --from=openlane_src /usr/local /usr/local
-# If the source image has other critical bins/libs, copy them similarly.
+# Default working directory (OpenLane expects /openLANE_flow)
+WORKDIR /openLANE_flow
 
-
-# Codespaces defaults
-WORKDIR /workspaces
-ENV PDK_ROOT=/workspaces/pdks
-RUN chown -R ${USERNAME}:${USERNAME} /workspaces
-USER ${USERNAME}
-
-# Optional VNC supervisor
+# ------------------------------------------------------------
+# Optional VNC supervisor support
+# ------------------------------------------------------------
+# Place your supervisord.conf (for VNC/XFCE/noVNC) next to this Dockerfile
 COPY supervisord.conf /etc/supervisor/conf.d/vnc.conf
+
+# Open default noVNC port
 EXPOSE 6080
+
+# Launch Supervisor as default process
 CMD ["bash", "-lc", "supervisord -n"]
