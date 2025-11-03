@@ -24,11 +24,6 @@ RUN groupadd --gid ${USER_GID} ${USERNAME} \
   && locale-gen \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# -------- Optional: extras some flows/scripts like to use ----
-# You can omit this block if you want a leaner image.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-      python3-pandas python3-xlsxwriter \
-  && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # -------- Workspace defaults --------------------------------
 # Codespaces usually mounts your repo at /workspaces/<repo>.
