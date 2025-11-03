@@ -1,11 +1,12 @@
 {
-  "name": "Openlane Workshop",
+  "name": "OpenLane v0.21 (built)",
   "build": { "dockerfile": "Dockerfile" },
-  "overrideCommand": false,
   "remoteUser": "root",
+  "overrideCommand": false,
+  "init": true,
   "containerEnv": {
     "DISPLAY": ":1",
-    "PDK_ROOT": "/workspaces/work/pdks"
+    "HOME": "/root"
   },
-  "postCreateCommand": "bash -lc 'if [ ! -e /openLANE_flow ]; then ln -s \"$PWD\" /openLANE_flow; fi && echo OPENLANE_FLOW_LINK_OK'"
+  "postCreateCommand": "bash -lc 'ln -sf \"$PWD\" /openLANE_flow || true; echo OPENLANE_FLOW_LINK_OK'"
 }
