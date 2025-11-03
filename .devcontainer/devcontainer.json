@@ -11,7 +11,7 @@
     }
   },
   "overrideCommand": false,
-  "remoteUser": "vscode",
+  "remoteUser": "root",
   "containerEnv": {
     "DISPLAY": ":1"
   }
