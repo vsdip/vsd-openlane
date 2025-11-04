@@ -11,6 +11,7 @@
     }
   },
   "overrideCommand": false,
+  "postCreateCommand": "bash .devcontainer/setup.sh",
   "remoteUser": "vscode",
   "containerEnv": {
     "DISPLAY": ":1"
