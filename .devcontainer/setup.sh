@@ -142,4 +142,44 @@ else
   echo "[WARN] ${SYNTH_TCL} not found; skipping synth patch."
 fi
 
+
+# ===== 6) Patch scripts/openroad/or_floorplan.tcl for newer OpenROAD =====
+if [ -d "${OPENLANE_ROOT}" ]; then
+  echo "[INFO] Patching OpenROAD floorplan script for track handling…"
+  cd "${OPENLANE_ROOT}"
+
+  if [ -f scripts/openroad/or_floorplan.tcl ]; then
+    # Backup
+    cp scripts/openroad/or_floorplan.tcl scripts/openroad/or_floorplan.tcl.bak
+
+    # Remove the deprecated -tracks flag (appears twice)
+    perl -0777 -pe 's/\s*-tracks\s+\$::env\(TRACKS_INFO_FILE\)\s*\\?\n//g' \
+      scripts/openroad/or_floorplan.tcl > scripts/openroad/or_floorplan.tcl.tmp && \
+    mv scripts/openroad/or_floorplan.tcl.tmp scripts/openroad/or_floorplan.tcl
+
+    # Inject a tiny helper proc + calls to read_tracks after initialize_floorplan
+    perl -0777 -pe '
+      BEGIN{$h=qq{
+# --- compatibility wrapper for newer OpenROAD (no -tracks on initialize_floorplan)
+proc __ol_read_tracks_if_supported {tracks_file} {
+  if {[llength [info commands read_tracks]] && [file exists $tracks_file]} {
+    puts "[INFO] Reading tracks from $tracks_file";
+    read_tracks $tracks_file
+  } else {
+    puts "[INFO] Skipping read_tracks (command missing or file not found)";
+  }
+}
+};}
+      s/(foreach lib .*?set right_margin \[expr.*?\]\n\n)/$1$h/s;
+      s/(initialize_floorplan[^\n]*\n(?:\s+-[^\n]*\n)*\s*-site[^\n]*\n\n)/$1    __ol_read_tracks_if_supported \$::env(TRACKS_INFO_FILE)\n\n/sg;
+    ' -i scripts/openroad/or_floorplan.tcl
+
+    echo "[INFO] or_floorplan.tcl patched successfully."
+  else
+    echo "[WARN] scripts/openroad/or_floorplan.tcl not found; skipping floorplan patch."
+  fi
+else
+  echo "[WARN] OPENLANE_ROOT not found at ${OPENLANE_ROOT}; skipping floorplan patch."
+fi
+
 echo "[VSD-INFO] setup.sh completed successfully."
