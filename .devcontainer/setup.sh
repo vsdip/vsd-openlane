@@ -182,4 +182,23 @@ else
   echo "[WARN] OPENLANE_ROOT not found at ${OPENLANE_ROOT}; skipping floorplan patch."
 fi
 
+# ===== 7) Patch scripts/openroad/or_pdn.tcl for newer OpenROAD (remove positional PDN_CFG) =====
+if [ -d "${OPENLANE_ROOT}" ]; then
+  echo "[INFO] Patching or_pdn.tcl to remove deprecated pdngen positional argument..."
+  cd "${OPENLANE_ROOT}"
+
+  if [ -f scripts/openroad/or_pdn.tcl ]; then
+    cp scripts/openroad/or_pdn.tcl scripts/openroad/or_pdn.tcl.bak
+
+    # Remove "$::env(PDN_CFG)" argument while keeping optional flags like -verbose
+    perl -0777 -pe 's/pdngen\s+\$::env\(PDN_CFG\)(\s+-verbose)?/pdngen\1/g' \
+      -i scripts/openroad/or_pdn.tcl
+
+    echo "[INFO] or_pdn.tcl patched successfully (pdngen positional argument removed)."
+  else
+    echo "[WARN] or_pdn.tcl not found; skipping PDN patch."
+  fi
+fi
+
+
 echo "[VSD-INFO] setup.sh completed successfully."
