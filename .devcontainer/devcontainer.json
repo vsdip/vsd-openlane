@@ -23,6 +23,7 @@
     "vscode": {
       "extensions": [
         "ms-vscode.markdown-language-features",
+        "DavidAnson.vscode-markdownlint",
         "yzhang.markdown-all-in-one"
       ]
     }
