@@ -1,19 +1,30 @@
 {
   "name": "OpenROAD cloud tools",
-  "build": {
-    "dockerfile": "Dockerfile"
-  },
+  "build": { "dockerfile": "Dockerfile" },
+
+  // ✅ Important: do NOT use the Dockerfile's CMD as the container's main process
+  "overrideCommand": true,
+
+  // Run your automation once after first create
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+
+  // Start supervisord in the background on each start/restart
+  "postStartCommand": "bash -lc 'pgrep -x supervisord >/dev/null || sudo -b /usr/bin/supervisord'",
+
+  "remoteUser": "vscode",
+  "containerEnv": { "DISPLAY": ":1" },
   "forwardPorts": [6080],
   "portsAttributes": {
-    "6080": {
-      "label": "noVNC Desktop",
-      "onAutoForward": "openBrowser"
-    }
+    "6080": { "label": "noVNC Desktop", "onAutoForward": "openBrowser", "requireLocalPort": true }
   },
-  "overrideCommand": false,
-  "postCreateCommand": "bash .devcontainer/setup.sh",
-  "remoteUser": "vscode",
-  "containerEnv": {
-    "DISPLAY": ":1"
+
+  // (Optional) Always have Markdown preview
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.markdown-language-features",
+        "yzhang.markdown-all-in-one"
+      ]
+    }
   }
 }
