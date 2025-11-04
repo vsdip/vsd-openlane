@@ -62,6 +62,9 @@ ENV PATH="/usr/local/bin:${PATH}"
 ENV YOSYS_EXE="/opt/oss-cad-suite/bin/yosys"
 ENV YOSYS_PLUGIN_PATH="/opt/oss-cad-suite/share/yosys/plugins"
 ENV PATH="/opt/oss-cad-suite/bin:/usr/local/bin:${PATH}"
+# … your existing Dockerfile …
+# make sure the setup script can run
+RUN chmod +x /workspaces/vsd-openlane/.devcontainer/setup.sh || true
 
 # --- noVNC desktop environment
 COPY supervisord.conf /etc/supervisor/conf.d/vnc.conf
