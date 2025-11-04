@@ -39,6 +39,7 @@ if [ ! -x "${STA_DIR}/app/sta" ]; then
 else
   echo "[INFO] OpenSTA already present. Skipping download."
 fi
+
 if [ -x "${STA_DIR}/app/sta" ]; then
   echo "[INFO] Linking /usr/bin/sta -> ${STA_DIR}/app/sta"
   sudo ln -sf "${STA_DIR}/app/sta" /usr/bin/sta
@@ -48,6 +49,7 @@ fi
 
 # ===== 3) Persistent environment =====
 PDK_ROOT_PATH="${WORK_DIR}/tools/openlane_working_dir/pdks"
+
 # Export for future shells
 {
   echo "export PDK_ROOT=${PDK_ROOT_PATH}"
@@ -76,7 +78,6 @@ use warnings;
 use strict;
 
 open (CELLS,'<', $ARGV[1]) or die("Couldn't open $ARGV[1]");
-
 my @cells = ();
 while(<CELLS>){
   next if (/\#/);
@@ -85,7 +86,8 @@ while(<CELLS>){
 }
 close(CELLS);
 
-my $state = 0; my $count = 0;
+my $state = 0;
+my $count = 0;
 
 for ($ARGV[0]) {
   for (split) {
@@ -93,21 +95,32 @@ for ($ARGV[0]) {
     while (my $line = <LIB>) {
       if ($state == 0) {
         if ($line =~ /cell\s*\(\"?(.*?)\"?\)/) {
-          if (grep { $_ eq $1 } @cells) { $state = 2; print "/* removed $1 */\n"; }
-          else { $state = 1; print $line; }
+          if (grep { $_ eq $1 } @cells) {
+            $state = 2;
+            print "/* removed $1 */\n";
+          } else {
+            $state = 1;
+            print $line;
+          }
           $count = 1;
-        } else { print $line; }
+        } else {
+          print $line;
+        }
       } elsif ($state == 1) {
-        $count++ if ($line =~ /\{/); $count-- if ($line =~ /\}/);
-        $state = 0 if ($count == 0); print $line;
+        $count++ if ($line =~ /\{/);
+        $count-- if ($line =~ /\}/);
+        $state = 0 if ($count == 0);
+        print $line;
       } else {
-        $count++ if ($line =~ /\{/); $count-- if ($line =~ /\}/);
+        $count++ if ($line =~ /\{/);
+        $count-- if ($line =~ /\}/);
         $state = 0 if ($count == 0);
       }
     }
     close(LIB);
   }
 }
+
 exit 0;
 PERL
   chmod +x "${OPENLANE_ROOT}/scripts/libtrim.pl"
@@ -140,6 +153,45 @@ if [ -f "${SYNTH_TCL}" ]; then
   fi
 else
   echo "[WARN] ${SYNTH_TCL} not found; skipping synth patch."
+fi
+
+# ===== 6) Patch scripts/openroad/or_floorplan.tcl for newer OpenROAD =====
+if [ -d "${OPENLANE_ROOT}" ]; then
+  echo "[INFO] Patching OpenROAD floorplan script for track handling…"
+  cd "${OPENLANE_ROOT}"
+
+  if [ -f scripts/openroad/or_floorplan.tcl ]; then
+    # Backup
+    cp scripts/openroad/or_floorplan.tcl scripts/openroad/or_floorplan.tcl.bak
+
+    # Remove the deprecated -tracks flag (appears twice)
+    perl -0777 -pe 's/\s*-tracks\s+\$::env\(TRACKS_INFO_FILE\)\s*\\?\n//g' \
+      scripts/openroad/or_floorplan.tcl > scripts/openroad/or_floorplan.tcl.tmp && \
+    mv scripts/openroad/or_floorplan.tcl.tmp scripts/openroad/or_floorplan.tcl
+
+    # Inject a tiny helper proc + calls to read_tracks after initialize_floorplan
+    perl -0777 -pe '
+      BEGIN{$h=qq{
+# --- compatibility wrapper for newer OpenROAD (no -tracks on initialize_floorplan)
+proc __ol_read_tracks_if_supported {tracks_file} {
+  if {[llength [info commands read_tracks]] && [file exists $tracks_file]} {
+    puts "[INFO] Reading tracks from $tracks_file";
+    read_tracks $tracks_file
+  } else {
+    puts "[INFO] Skipping read_tracks (command missing or file not found)";
+  }
+}
+};}
+      s/(foreach lib .*?set right_margin \[expr.*?\]\n\n)/$1$h/s;
+      s/(initialize_floorplan[^\n]*\n(?:\s+-[^\n]*\n)*\s*-site[^\n]*\n\n)/$1    __ol_read_tracks_if_supported \$::env(TRACKS_INFO_FILE)\n\n/sg;
+    ' -i scripts/openroad/or_floorplan.tcl
+
+    echo "[INFO] or_floorplan.tcl patched successfully."
+  else
+    echo "[WARN] scripts/openroad/or_floorplan.tcl not found; skipping floorplan patch."
+  fi
+else
+  echo "[WARN] OPENLANE_ROOT not found at ${OPENLANE_ROOT}; skipping floorplan patch."
 fi
 
 echo "[VSD-INFO] setup.sh completed successfully."
