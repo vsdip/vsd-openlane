@@ -138,6 +138,37 @@ exit 0;
 PERL
 chmod +x "${OPENLANE_ROOT}/scripts/libtrim.pl"
 
+##################################################################
+### Inject VSD autosettings into synth.tcl (runs before synthesis)
+##################################################################
+
+SYNTH_TCL="${OPENLANE_ROOT}/scripts/synth.tcl"
+if [ -f "${SYNTH_TCL}" ]; then
+  if ! grep -q "VSD AUTOINJECT BEGIN" "${SYNTH_TCL}"; then
+    echo "[INFO] Inserting VSD autosettings into scripts/synth.tcl…"
+    awk '
+      BEGIN { injected=0 }
+      {
+        print
+        if (!injected && $0 ~ /^yosys -import/) {
+          print ""
+          print "# --- VSD AUTOINJECT BEGIN ---"
+          print "set ::env(ABC_EXEC) \"/opt/oss-cad-suite/bin/yosys-abc\""
+          print "catch { unset ::env(TMPDIR) }"
+          print "set ::env(SYNTH_STRATEGY) \"DELAY 0\""
+          print "# --- VSD AUTOINJECT END ---"
+          injected=1
+        }
+      }
+    ' "${SYNTH_TCL}" > "${SYNTH_TCL}.new" && mv "${SYNTH_TCL}.new" "${SYNTH_TCL}"
+  else
+    echo "[INFO] scripts/synth.tcl already contains VSD autosettings."
+  fi
+else
+  echo "[WARN] ${SYNTH_TCL} not found; cannot inject autosettings."
+fi
+
+
 ############################################
 # 5) Floorplan fix (or_floorplan.tcl)
 ############################################
