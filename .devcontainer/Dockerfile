@@ -1,14 +1,18 @@
+# .devcontainer/Dockerfile
 FROM mcr.microsoft.com/devcontainers/base:ubuntu-22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Keep this tiny: only what we need to run OpenLane helper scripts and extract PDK packs
+# Just what we need on the host: python venv, Tcl bits, archive tools, GUI stack, supervisord
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates curl git make jq \
-    python3-venv python3-pip gedit vim less \
-    tcl tcllib \
+    python3-venv python3-pip \
+    tcl tcllib less gedit vim \
     unzip zstd tar rsync \
- && rm -rf /var/lib/apt/lists/*
+    xvfb x11vnc novnc websockify fluxbox xterm xfonts-base \
+    supervisor \
+  && rm -rf /var/lib/apt/lists/*
 
-# workspace mount point
+# Folders for logs
+RUN mkdir -p /var/log/supervisor
 WORKDIR /workspaces
