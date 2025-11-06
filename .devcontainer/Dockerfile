@@ -67,6 +67,6 @@ ENV PATH="/opt/oss-cad-suite/bin:/usr/local/bin:${PATH}"
 RUN chmod +x /workspaces/vsd-openlane/.devcontainer/setup.sh || true
 
 # --- noVNC desktop environment
-COPY supervisord.conf /etc/supervisor/conf.d/vnc.conf
-EXPOSE 6080
-CMD ["/usr/bin/supervisord", "-n"]
+#COPY supervisord.conf /etc/supervisor/conf.d/vnc.conf
+#EXPOSE 6080
+#CMD ["/usr/bin/supervisord", "-n"]
