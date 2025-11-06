@@ -1,29 +1,41 @@
 {
-  "name": "OpenROAD cloud tools",
-  "build": { "dockerfile": "Dockerfile" },
-
-  // ✅ Important: do NOT use the Dockerfile's CMD as the container's main process
-  "overrideCommand": true,
-
-  // Run your automation once after first create
-  "postCreateCommand": "bash .devcontainer/setup.sh",
-
-  // Start supervisord in the background on each start/restart
-  "postStartCommand": "bash -lc 'pgrep -x supervisord >/dev/null || sudo -b /usr/bin/supervisord'",
-
-  "remoteUser": "vscode",
-  "containerEnv": { "DISPLAY": ":1" },
-  "forwardPorts": [6080],
-  "portsAttributes": {
-    "6080": { "label": "noVNC Desktop", "onAutoForward": "openBrowser", "requireLocalPort": true }
+  "name": "OpenLane (superstable) — Codespace",
+  "build": {
+    "dockerfile": "Dockerfile"
   },
-
-  // (Optional) Always have Markdown preview
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "moby": false
+    }
+  },
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": true,
+  "mounts": [
+    "source=ol-pdk-cache,target=/workspaces/.pdk,type=volume",
+    "source=ol-docker-cache,target=/var/lib/docker,type=volume"
+  ],
+  "containerEnv": {
+    "PDK_ROOT": "/workspaces/.pdk",
+    "PDK": "sky130A",
+    "STD_CELL_LIBRARY": "sky130_fd_sc_hd",
+    "OPENLANE_DIR": "/workspaces/OpenLane",
+    "INSTALL_OPENSTA": "0"
+  },
+  "postCreateCommand": "bash .devcontainer/setup.sh",
   "customizations": {
     "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "files.trimTrailingWhitespace": true
+      },
       "extensions": [
-        "ms-vscode.markdown-language-features",
-        "yzhang.markdown-all-in-one"
+        "ms-vscode.makefile-tools",
+        "tamasfe.even-better-toml",
+        "ms-vscode.gitlens",
+        "ms-vscode.cpptools-extension-pack",
+        "ms-vscode.vscode-typescript-next",
+        "ms-vscode.hexeditor"
       ]
     }
   }
