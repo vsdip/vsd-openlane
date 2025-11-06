@@ -1,185 +1,69 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ===== Basics & paths =====
-ME="${USER:-vscode}"
-HOME_DIR="/home/${ME}"
-DESKTOP_DIR="${HOME_DIR}/Desktop"
-WORK_PARENT="${DESKTOP_DIR}"
-WORK_DIR="${WORK_PARENT}/work"
-OPENLANE_ROOT="${HOME_DIR}/Desktop/work/tools/openlane_working_dir/openlane"
+echo "[setup] START"
 
-echo "[INFO] setup.sh: user=${ME} home=${HOME_DIR}"
+OPENLANE_DIR="${OPENLANE_DIR:-/workspaces/OpenLane}"
+PDK_ROOT="${PDK_ROOT:-/workspaces/.pdk}"
+PDK="${PDK:-sky130A}"
+STD_CELL_LIBRARY="${STD_CELL_LIBRARY:-sky130_fd_sc_hd}"
 
-mkdir -p "${WORK_PARENT}"
+mkdir -p "$PDK_ROOT"
 
-# ===== 1) Fetch & unpack work.zip (3.5GB) =====
-cd "${WORK_PARENT}"
-if [ ! -d "${WORK_DIR}" ]; then
-  echo "[INFO] Downloading work.zip…"
-  wget -O work.zip "https://vsd-labs.sgp1.cdn.digitaloceanspaces.com/vsd-labs/work.zip"
-  echo "[INFO] Unzipping work.zip…"
-  unzip -q work.zip
-  echo "[INFO] Removing work.zip to reclaim space…"
-  rm -f work.zip
-else
-  echo "[INFO] ${WORK_DIR} already exists. Skipping."
+# 0) Optional: tiny host OpenSTA install (OFF by default to save space)
+if [[ "${INSTALL_OPENSTA:-0}" == "1" ]]; then
+  echo "[setup] Installing OpenSTA (host) - optional"
+  sudo apt-get update && sudo apt-get install -y --no-install-recommends opensta || true
+  sudo rm -rf /var/lib/apt/lists/*
 fi
 
-# ===== 2) Fetch & unpack OpenSTA and link =====
-cd "${HOME_DIR}"
-STA_DIR="${HOME_DIR}/OpenSTA"
-if [ ! -x "${STA_DIR}/app/sta" ]; then
-  echo "[INFO] Downloading OpenSTA.tar.gz…"
-  wget -O OpenSTA.tar.gz "https://vsd-labs.sgp1.cdn.digitaloceanspaces.com/vsd-labs/OpenSTA.tar.gz"
-  echo "[INFO] Extracting OpenSTA.tar.gz…"
-  tar -xzf OpenSTA.tar.gz
-  echo "[INFO] Removing OpenSTA.tar.gz…"
-  rm -f OpenSTA.tar.gz
+# 1) Get OpenLane (superstable)
+if [[ ! -d "$OPENLANE_DIR/.git" ]]; then
+  echo "[setup] Cloning OpenLane (superstable)"
+  git clone --depth=1 --branch superstable https://github.com/The-OpenROAD-Project/OpenLane.git "$OPENLANE_DIR"
 else
-  echo "[INFO] OpenSTA already present. Skipping download."
-fi
-if [ -x "${STA_DIR}/app/sta" ]; then
-  echo "[INFO] Linking /usr/bin/sta -> ${STA_DIR}/app/sta"
-  sudo ln -sf "${STA_DIR}/app/sta" /usr/bin/sta
-else
-  echo "[WARN] OpenSTA binary not found at ${STA_DIR}/app/sta"
+  echo "[setup] OpenLane repo already present, pulling latest superstable"
+  (cd "$OPENLANE_DIR" && git fetch --depth=1 origin superstable && git checkout superstable && git pull --ff-only)
 fi
 
-# ===== 3) Persistent environment =====
-PDK_ROOT_PATH="${WORK_DIR}/tools/openlane_working_dir/pdks"
-# Export for future shells
-{
-  echo "export PDK_ROOT=${PDK_ROOT_PATH}"
-  echo "export LANG=C.UTF-8"
-  echo "export LC_ALL=C.UTF-8"
-  echo 'export ABC_EXEC="/opt/oss-cad-suite/bin/yosys-abc"'
-  echo 'unset TMPDIR || true'
-  echo 'export SYNTH_STRATEGY="DELAY 0"'
-} >> "${HOME_DIR}/.bashrc"
+# 2) Python venv for OpenLane helper scripts
+echo "[setup] Creating Python venv"
+python3 -m venv "$OPENLANE_DIR/venv"
+"$OPENLANE_DIR/venv/bin/pip" install --upgrade pip
+"$OPENLANE_DIR/venv/bin/pip" install --no-cache-dir -r "$OPENLANE_DIR/requirements.txt"
 
-# Export for current run
-export PDK_ROOT="${PDK_ROOT_PATH}"
-export LANG=C.UTF-8
-export LC_ALL=C.UTF-8
-export ABC_EXEC="/opt/oss-cad-suite/bin/yosys-abc"
-unset TMPDIR || true
-export SYNTH_STRATEGY="DELAY 0"
-
-# ===== 4) Place scripts/libtrim.pl =====
-if [ -d "${OPENLANE_ROOT}" ]; then
-  echo "[INFO] Installing scripts/libtrim.pl…"
-  mkdir -p "${OPENLANE_ROOT}/scripts"
-  cat > "${OPENLANE_ROOT}/scripts/libtrim.pl" <<'PERL'
-#!/usr/bin/perl
-use warnings;
-use strict;
-
-open (CELLS,'<', $ARGV[1]) or die("Couldn't open $ARGV[1]");
-
-my @cells = ();
-while(<CELLS>){
-  next if (/\#/);
-  chomp;
-  push @cells, $_ if length $_;
+# 3) Enable MATCHED PDK via ciel (idempotent)
+echo "[setup] Enabling PDK '$PDK' into $PDK_ROOT"
+PDK_ROOT="$PDK_ROOT" "$OPENLANE_DIR/venv/bin/ciel" enable --pdk "$PDK" || {
+  echo "[setup] ciel enable returned non-zero; re-trying after cleaning dead symlinks"
+  find "$PDK_ROOT" -xtype l -exec rm -f {} +
+  PDK_ROOT="$PDK_ROOT" "$OPENLANE_DIR/venv/bin/ciel" enable --pdk "$PDK"
 }
-close(CELLS);
 
-my $state = 0; my $count = 0;
+# 4) Pull tested OpenLane Docker image (cached in ol-docker-cache volume)
+echo "[setup] Pulling OpenLane image"
+make -C "$OPENLANE_DIR" pull-openlane || true
 
-for ($ARGV[0]) {
-  for (split) {
-    open (LIB, $_) or die("Couldn't open $_");
-    while (my $line = <LIB>) {
-      if ($state == 0) {
-        if ($line =~ /cell\s*\(\"?(.*?)\"?\)/) {
-          if (grep { $_ eq $1 } @cells) { $state = 2; print "/* removed $1 */\n"; }
-          else { $state = 1; print $line; }
-          $count = 1;
-        } else { print $line; }
-      } elsif ($state == 1) {
-        $count++ if ($line =~ /\{/); $count-- if ($line =~ /\}/);
-        $state = 0 if ($count == 0); print $line;
-      } else {
-        $count++ if ($line =~ /\{/); $count-- if ($line =~ /\}/);
-        $state = 0 if ($count == 0);
-      }
-    }
-    close(LIB);
-  }
-}
-exit 0;
-PERL
-  chmod +x "${OPENLANE_ROOT}/scripts/libtrim.pl"
-else
-  echo "[WARN] OPENLANE_ROOT not found at ${OPENLANE_ROOT}; skipping libtrim.pl"
+# 5) Helper aliases (optional)
+PROFILE_SNIPPET="# OpenLane helpers
+export PDK_ROOT=\"$PDK_ROOT\"
+export PDK=\"$PDK\"
+export STD_CELL_LIBRARY=\"$STD_CELL_LIBRARY\"
+export OPENLANE_DIR=\"$OPENLANE_DIR\"
+alias ol-mount='cd \"$OPENLANE_DIR\" && make mount'
+alias ol-run='cd \"$OPENLANE_DIR\" && ./flow.tcl -design spm -overwrite -tag quick'
+"
+if ! grep -q 'OpenLane helpers' /home/vscode/.bashrc 2>/dev/null; then
+  echo "$PROFILE_SNIPPET" >> /home/vscode/.bashrc
 fi
 
-# ===== 5) Inject 3 synthesis settings into scripts/synth.tcl =====
-SYNTH_TCL="${OPENLANE_ROOT}/scripts/synth.tcl"
-if [ -f "${SYNTH_TCL}" ]; then
-  if ! grep -q "VSD AUTOINJECT BEGIN" "${SYNTH_TCL}"; then
-    echo "[INFO] Patching ${SYNTH_TCL} with autosettings…"
-    awk '
-      BEGIN { injected=0 }
-      {
-        print
-        if (!injected && $0 ~ /^yosys -import/) {
-          print ""
-          print "# --- VSD AUTOINJECT BEGIN ---"
-          print "set ::env(ABC_EXEC) \"/opt/oss-cad-suite/bin/yosys-abc\""
-          print "catch { unset ::env(TMPDIR) }"
-          print "set ::env(SYNTH_STRATEGY) \"DELAY 0\""
-          print "# --- VSD AUTOINJECT END ---"
-          injected=1
-        }
-      }
-    ' "${SYNTH_TCL}" > "${SYNTH_TCL}.new" && mv "${SYNTH_TCL}.new" "${SYNTH_TCL}"
-  else
-    echo "[INFO] ${SYNTH_TCL} already contains autosettings."
-  fi
-else
-  echo "[WARN] ${SYNTH_TCL} not found; skipping synth patch."
-fi
-
-
-# ===== 6) Patch scripts/openroad/or_floorplan.tcl for newer OpenROAD =====
-if [ -d "${OPENLANE_ROOT}" ]; then
-  echo "[INFO] Patching OpenROAD floorplan script for track handling…"
-  cd "${OPENLANE_ROOT}"
-
-  if [ -f scripts/openroad/or_floorplan.tcl ]; then
-    # Backup
-    cp scripts/openroad/or_floorplan.tcl scripts/openroad/or_floorplan.tcl.bak
-
-    # Remove the deprecated -tracks flag (appears twice)
-    perl -0777 -pe 's/\s*-tracks\s+\$::env\(TRACKS_INFO_FILE\)\s*\\?\n//g' \
-      scripts/openroad/or_floorplan.tcl > scripts/openroad/or_floorplan.tcl.tmp && \
-    mv scripts/openroad/or_floorplan.tcl.tmp scripts/openroad/or_floorplan.tcl
-
-    # Inject a tiny helper proc + calls to read_tracks after initialize_floorplan
-    perl -0777 -pe '
-      BEGIN{$h=qq{
-# --- compatibility wrapper for newer OpenROAD (no -tracks on initialize_floorplan)
-proc __ol_read_tracks_if_supported {tracks_file} {
-  if {[llength [info commands read_tracks]] && [file exists $tracks_file]} {
-    puts "[INFO] Reading tracks from $tracks_file";
-    read_tracks $tracks_file
-  } else {
-    puts "[INFO] Skipping read_tracks (command missing or file not found)";
-  }
-}
-};}
-      s/(foreach lib .*?set right_margin \[expr.*?\]\n\n)/$1$h/s;
-      s/(initialize_floorplan[^\n]*\n(?:\s+-[^\n]*\n)*\s*-site[^\n]*\n\n)/$1    __ol_read_tracks_if_supported \$::env(TRACKS_INFO_FILE)\n\n/sg;
-    ' -i scripts/openroad/or_floorplan.tcl
-
-    echo "[INFO] or_floorplan.tcl patched successfully."
-  else
-    echo "[WARN] scripts/openroad/or_floorplan.tcl not found; skipping floorplan patch."
-  fi
-else
-  echo "[WARN] OPENLANE_ROOT not found at ${OPENLANE_ROOT}; skipping floorplan patch."
-fi
-
-echo "[VSD-INFO] setup.sh completed successfully."
+echo "[setup] DONE"
+echo
+echo "How to run:"
+echo "  1) Container (recommended):"
+echo "     ol-mount"
+echo "     # then inside container: ./flow.tcl -design spm -overwrite -tag test"
+echo
+echo "  2) Non-interactive (container from host):"
+echo "     cd \"$OPENLANE_DIR\" && ./flow.tcl -design spm -overwrite -tag test"
+echo
