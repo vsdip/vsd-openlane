@@ -72,7 +72,7 @@ if ! grep -q 'OpenLane helpers' /home/vscode/.bashrc 2>/dev/null; then
   echo "$PROFILE_SNIPPET" >> /home/vscode/.bashrc
 fi
 
-echo "[setup] DONE"
+echo "[VSD-OPENLANE Codespace setup] DONE"
 echo
 echo "Run OpenLane:"
 echo "  1) Container shell (recommended):  ol-mount    # then: ./flow.tcl -design spm -overwrite -tag test"
