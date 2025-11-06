@@ -1,21 +1,51 @@
 {
-  "name": "OpenLane superstable — minimal",
+  "name": "OpenLane superstable + Docker + noVNC",
   "build": { "dockerfile": "Dockerfile" },
+
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "moby": false
+    }
+  },
+
   "remoteUser": "vscode",
   "updateRemoteUserUID": true,
+
+  "mounts": [
+    "source=ol-pdk-cache,type=volume,target=/workspaces/.pdk",
+    "source=ol-docker-cache,type=volume,target=/var/lib/docker"
+  ],
+
   "containerEnv": {
     "OPENLANE_DIR": "/workspaces/OpenLane",
     "PDK_ROOT": "/workspaces/.pdk",
     "PDK": "sky130A",
-    "STD_CELL_LIBRARY": "sky130_fd_sc_hd"
+    "STD_CELL_LIBRARY": "sky130_fd_sc_hd",
+    "DISPLAY": ":0",
+    "NOVNC_PORT": "6080",
+    "WORKSHOP_HOME": "/home/vscode/Desktop/work"
   },
+
+  "forwardPorts": [6080],
+
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+
+  "postStartCommand": "supervisord -c .devcontainer/supervisord.conf || true",
+
+  "overrideCommand": false,
+  "init": true,
+
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-vscode.makefile-tools",
         "ms-vscode.gitlens"
-      ]
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "files.trimTrailingWhitespace": true
+      }
     }
-  },
-  "postCreateCommand": "echo 'Ready. Run setup scripts manually.'"
+  }
 }
