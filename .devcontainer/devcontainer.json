@@ -1,5 +1,5 @@
 {
-  "name": "OpenLane superstable + Docker + noVNC",
+  "name": "OpenLane superstable (stable-boot)",
   "build": { "dockerfile": "Dockerfile" },
 
   "features": {
@@ -19,19 +19,17 @@
 
   "containerEnv": {
     "OPENLANE_DIR": "/workspaces/OpenLane",
+    "WORKSHOP_HOME": "/home/vscode/Desktop/work",
     "PDK_ROOT": "/workspaces/.pdk",
     "PDK": "sky130A",
     "STD_CELL_LIBRARY": "sky130_fd_sc_hd",
     "DISPLAY": ":0",
-    "NOVNC_PORT": "6080",
-    "WORKSHOP_HOME": "/home/vscode/Desktop/work"
+    "NOVNC_PORT": "6080"
   },
 
   "forwardPorts": [6080],
 
-  "postCreateCommand": "bash .devcontainer/setup.sh",
-
-  "postStartCommand": "supervisord -c .devcontainer/supervisord.conf || true",
+  "postCreateCommand": "bash .devcontainer/postcreate_min.sh",
 
   "overrideCommand": false,
   "init": true,
