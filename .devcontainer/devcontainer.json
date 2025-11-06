@@ -1,8 +1,6 @@
 {
-  "name": "OpenLane (superstable) — Codespace",
-  "build": {
-    "dockerfile": "Dockerfile"
-  },
+  "name": "OpenLane (superstable) + noVNC",
+  "build": { "dockerfile": "Dockerfile" },
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
       "version": "latest",
@@ -20,9 +18,14 @@
     "PDK": "sky130A",
     "STD_CELL_LIBRARY": "sky130_fd_sc_hd",
     "OPENLANE_DIR": "/workspaces/OpenLane",
-    "INSTALL_OPENSTA": "0"
+    "DISPLAY": ":0",
+    "NOVNC_PORT": "6080"
   },
+  "forwardPorts": [6080],
   "postCreateCommand": "bash .devcontainer/setup.sh",
+  "overrideCommand": false,
+  "runArgs": ["-v", "/var/lib/docker"],
+  "init": true,
   "customizations": {
     "vscode": {
       "settings": {
@@ -31,12 +34,10 @@
       },
       "extensions": [
         "ms-vscode.makefile-tools",
-        "tamasfe.even-better-toml",
-        "ms-vscode.gitlens",
-        "ms-vscode.cpptools-extension-pack",
-        "ms-vscode.vscode-typescript-next",
-        "ms-vscode.hexeditor"
+        "ms-vscode.gitlens"
       ]
     }
-  }
+  },
+  "postStartCommand": "supervisord -c .devcontainer/supervisord.conf || true"
 }
+
