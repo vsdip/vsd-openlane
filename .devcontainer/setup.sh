@@ -23,13 +23,23 @@ if [[ "${INSTALL_OPENSTA:-0}" == "1" ]]; then
 fi
 
 # --------- OpenLane clone (superstable) ----------
-if [[ ! -d "$OPENLANE_DIR/.git" ]]; then
+if [[ -d "$OPENLANE_DIR/.git" ]]; then
+  echo "[setup] Updating existing OpenLane repo at $OPENLANE_DIR"
+  ( set -e
+    cd "$OPENLANE_DIR"
+    git fetch --depth=1 origin superstable
+    git checkout superstable
+    git reset --hard origin/superstable
+  )
+else
+  if [[ -d "$OPENLANE_DIR" && -n "$(ls -A "$OPENLANE_DIR" 2>/dev/null)" ]]; then
+    echo "[setup] Found non-git directory at $OPENLANE_DIR; moving aside."
+    mv "$OPENLANE_DIR" "${OPENLANE_DIR}.bak_$(date +%s)"
+  fi
   echo "[setup] Cloning OpenLane (superstable)"
   git clone --depth=1 --branch superstable https://github.com/The-OpenROAD-Project/OpenLane.git "$OPENLANE_DIR"
-else
-  echo "[setup] Updating OpenLane (superstable)"
-  (cd "$OPENLANE_DIR" && git fetch --depth=1 origin superstable && git checkout superstable && git pull --ff-only)
 fi
+
 
 # --------- Python venv ----------
 echo "[setup] Creating Python venv"
