@@ -1,18 +1,15 @@
-# .devcontainer/Dockerfile
 FROM mcr.microsoft.com/devcontainers/base:ubuntu-22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Just what we need on the host: python venv, Tcl bits, archive tools, GUI stack, supervisord
+# Keep small; GUI & Docker daemons are started later, not in build
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates curl git make jq \
     python3-venv python3-pip \
-    tcl tcllib less gedit vim \
+    tcl tcllib \
     unzip zstd tar rsync \
     xvfb x11vnc novnc websockify fluxbox xterm xfonts-base \
     supervisor \
-  && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/*
 
-# Folders for logs
-RUN mkdir -p /var/log/supervisor
 WORKDIR /workspaces
