@@ -1,21 +1,9 @@
 {
-  "name": "OpenLane superstable (stable-boot)",
+  "name": "OpenLane (superstable) with Podman + noVNC",
   "build": { "dockerfile": "Dockerfile" },
-
-  "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {
-      "version": "latest",
-      "moby": false
-    }
-  },
 
   "remoteUser": "vscode",
   "updateRemoteUserUID": true,
-
-  "mounts": [
-    "source=ol-pdk-cache,type=volume,target=/workspaces/.pdk",
-    "source=ol-docker-cache,type=volume,target=/var/lib/docker"
-  ],
 
   "containerEnv": {
     "OPENLANE_DIR": "/workspaces/OpenLane",
@@ -27,23 +15,22 @@
     "NOVNC_PORT": "6080"
   },
 
+  "mounts": [
+    "source=ol-pdk-cache,type=volume,target=/workspaces/.pdk",
+    "source=ol-images-cache,type=volume,target=/var/lib/containers"
+  ],
+
   "forwardPorts": [6080],
 
-  "postCreateCommand": "bash .devcontainer/postcreate_min.sh",
-
-  "overrideCommand": false,
-  "init": true,
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "postStartCommand": "supervisord -c .devcontainer/supervisord.conf || true",
 
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-vscode.makefile-tools",
         "ms-vscode.gitlens"
-      ],
-      "settings": {
-        "terminal.integrated.defaultProfile.linux": "bash",
-        "files.trimTrailingWhitespace": true
-      }
+      ]
     }
   }
 }
