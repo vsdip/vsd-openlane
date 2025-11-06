@@ -1,56 +1,21 @@
-[supervisord]
-nodaemon=true
-logfile=/var/log/supervisor/supervisord.log
-logfile_maxbytes=5MB
-logfile_backups=1
-pidfile=/var/run/supervisord.pid
-childlogdir=/var/log/supervisor
+#!/usr/bin/env bash
+set -euo pipefail
 
-[program:xvfb]
-command=/usr/bin/Xvfb :0 -screen 0 1920x1080x24 -nolisten tcp
-autostart=true
-autorestart=true
-stdout_logfile=/var/log/supervisor/xvfb.out.log
-stdout_logfile_maxbytes=1MB
-stdout_logfile_backups=1
-stderr_logfile=/var/log/supervisor/xvfb.err.log
-stderr_logfile_maxbytes=1MB
-stderr_logfile_backups=1
-environment=DISPLAY=":0"
+export DISPLAY="${DISPLAY:-:0}"
+PORT="${NOVNC_PORT:-6080}"
 
-[program:fluxbox]
-command=/usr/bin/fluxbox
-autostart=true
-autorestart=true
-priority=10
-stdout_logfile=/var/log/supervisor/fluxbox.out.log
-stdout_logfile_maxbytes=1MB
-stdout_logfile_backups=1
-stderr_logfile=/var/log/supervisor/fluxbox.err.log
-stderr_logfile_maxbytes=1MB
-stderr_logfile_backups=1
-environment=DISPLAY=":0",HOME="/home/vscode"
+# stop leftovers
+pkill -f "Xvfb :0"     || true
+pkill -f "x11vnc"      || true
+pkill -f "novnc_proxy" || true
+pkill -f "fluxbox"     || true
 
-[program:x11vnc]
-command=/usr/bin/x11vnc -display :0 -nopw -forever -shared -rfbport 5900 -rfbwait 120000
-autostart=true
-autorestart=true
-priority=20
-stdout_logfile=/var/log/supervisor/x11vnc.out.log
-stdout_logfile_maxbytes=1MB
-stdout_logfile_backups=1
-stderr_logfile=/var/log/supervisor/x11vnc.err.log
-stderr_logfile_maxbytes=1MB
-stderr_logfile_backups=1
+# start stack
+Xvfb :0 -screen 0 1920x1080x24 -nolisten tcp &
+sleep 0.5
+fluxbox &
+x11vnc -display :0 -nopw -forever -shared -rfbport 5900 -rfbwait 120000 >/tmp/x11vnc.log 2>&1 &
+/usr/share/novnc/utils/novnc_proxy --listen "$PORT" --vnc localhost:5900 >/tmp/novnc.log 2>&1 &
 
-[program:novnc]
-command=/usr/share/novnc/utils/novnc_proxy --listen 6080 --vnc localhost:5900
-autostart=true
-autorestart=true
-priority=30
-stdout_logfile=/var/log/supervisor/novnc.out.log
-stdout_logfile_maxbytes=1MB
-stdout_logfile_backups=1
-stderr_logfile=/var/log/supervisor/novnc.err.log
-stderr_logfile_maxbytes=1MB
-stderr_logfile_backups=1
+echo "noVNC → https://localhost:${PORT}/vnc.html  (or use the Ports tab → 6080 → Open in Browser)"
+echo "Then run GUI apps (e.g., 'openroad -gui') from the OpenLane container or host with DISPLAY=:0."
