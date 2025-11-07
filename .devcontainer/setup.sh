@@ -61,7 +61,7 @@ export PDK_ROOT="$PDK_ROOT_DEFAULT"
 export PDK="$PDK_NAME"
 export STD_CELL_LIBRARY="$STD_LIB"
 
-echo "[setup] Verifying docker is reachable inside the devcontainer"
+echo "[VSD OPENLANE CODSESPACE setup] Verifying docker is reachable inside the devcontainer"
 docker --version || { echo "[setup][warn] docker CLI not found"; true; }
 docker info >/dev/null 2>&1 || echo "[setup][note] Docker daemon will be ready after container restart (Devcontainer feature handles it)."
 
@@ -70,3 +70,18 @@ echo "  1) Open a new terminal (to load .bashrc), then run:"
 echo "       openlane"
 echo "     or:"
 echo "       cd \"$HOME/Desktop/OpenLane\" && ./flow.tcl -interactive"
+
+# --- Copy user design into OpenLane (instead of symlink) ---
+WS="${REMOTE_CONTAINERS_WORKSPACE_FOLDER:-$START_DIR}"
+DESIGN_SRC="$WS/.openlane-designs/picorv32a"
+DESIGN_DST="$OPENLANE_DIR/designs/picorv32a"
+
+if [ -d "$DESIGN_SRC" ]; then
+  echo "[setup] Copying picorv32a into OpenLane designs"
+  mkdir -p "$DESIGN_DST"
+  rsync -a --delete "$DESIGN_SRC/" "$DESIGN_DST/"
+  ls -l "$DESIGN_DST"
+else
+  echo "[setup] Skip: $DESIGN_SRC not found (create it in your repo to enable)"
+fi
+
