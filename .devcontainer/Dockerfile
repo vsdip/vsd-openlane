@@ -8,7 +8,7 @@ SHELL ["/bin/bash", "-lc"]
 RUN apt-get update && apt-get install -y \
     git make curl ca-certificates \
     python3 python3-venv python3-pip \
-    tcl magic ngspice vim less \
+    tcl magic ngspice vim gedit less \
     xfce4 xfce4-terminal x11vnc xvfb novnc websockify supervisor dbus-x11 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -29,7 +29,8 @@ ENV PATH="/home/vscode/.local/bin:${PATH}"
 # -----------------------------
 # noVNC desktop environment
 # -----------------------------
-RUN mkdir -p /var/log/supervisor
-COPY supervisord.conf /etc/supervisor/supervisord.conf
-COPY vnc.conf /etc/supervisor/conf.d/vnc.conf
+COPY supervisord.conf /etc/supervisor/conf.d/vnc.conf
+
+EXPOSE 6080
+CMD ["/usr/bin/supervisord", "-n"]
 
