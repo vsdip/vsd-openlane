@@ -33,9 +33,9 @@ ENV PATH="/home/vscode/.local/bin:${PATH}"
 # Set a default display (used by Magic and the desktop)
 ENV DISPLAY=:1
 
-# Copy our startup script into the image
-COPY start-vnc.sh /usr/local/bin/start-vnc.sh
-RUN chmod +x /usr/local/bin/start-vnc.sh
+# If the script sits next to the Dockerfile:
+COPY --chmod=0755 start-vnc.sh /usr/local/bin/start-vnc.sh
+
 
 # Expose noVNC port
 EXPOSE 6080
