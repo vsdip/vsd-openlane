@@ -11,6 +11,9 @@
       "onAutoForward": "openBrowser"
     }
   },
+  "containerEnv": {
+    "DISPLAY": ":1"
+  },
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
       "version": "latest"
