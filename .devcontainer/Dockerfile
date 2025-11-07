@@ -24,3 +24,11 @@ USER vscode
 
 # Helpful PATH for venvs you create in setup.sh
 ENV PATH="/home/vscode/.local/bin:${PATH}"
+
+# -----------------------------
+# noVNC desktop environment
+# -----------------------------
+COPY supervisord.conf /etc/supervisor/conf.d/vnc.conf
+
+EXPOSE 6080
+CMD ["/usr/bin/supervisord", "-n"]
