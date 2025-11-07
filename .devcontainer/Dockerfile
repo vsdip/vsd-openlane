@@ -13,13 +13,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # --- Build and install MAGIC (requested) ---
-#WORKDIR /tmp/build
-#RUN git clone https://github.com/RTimothyEdwards/magic && \
-#    cd magic && \
-#    ./configure && \
-#    make -j"$(nproc)" && \
-#    make install && \
-#    cd / && rm -rf /tmp/build
+WORKDIR /tmp/build
+RUN git clone https://github.com/RTimothyEdwards/magic && \
+    cd magic && \
+    ./configure && \
+    make -j"$(nproc)" && \
+    make install && \
+    cd / && rm -rf /tmp/build
 
 # --- noVNC desktop via supervisord (same pattern as bandgap) ---
 COPY supervisord.conf /etc/supervisor/conf.d/vnc.conf
