@@ -1,27 +1,26 @@
+# Simple, fast base for Codespaces
 FROM mcr.microsoft.com/devcontainers/base:ubuntu-22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
+SHELL ["/bin/bash", "-lc"]
 
-# Base deps + Tcl + archive tools + GUI stack + supervisor + Podman
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates curl git make jq \
-    python3-venv python3-pip \
-    tcl tcllib \
-    unzip zstd tar rsync \
-    xvfb x11vnc novnc websockify fluxbox xterm xfonts-base \
-    supervisor \
-    uidmap slirp4netns fuse-overlayfs podman \
- && rm -rf /var/lib/apt/lists/*
+# Core deps: git, build tools, python venv, tcl for flow.tcl, plus quality-of-life tools
+RUN apt-get update && apt-get install -y \
+    git make curl ca-certificates \
+    python3 python3-venv python3-pip \
+    tcl \
+    && rm -rf /var/lib/apt/lists/*
 
-# --- Make a docker shim that calls podman ---
-RUN printf '#!/usr/bin/env bash\nexec podman "$@"\n' > /usr/local/bin/docker && \
-    chmod +x /usr/local/bin/docker
+# Create Desktop folder (matches your path expectations)
+RUN mkdir -p /home/vscode/Desktop && chown -R vscode:vscode /home/vscode/Desktop
 
-# Rootless Podman defaults: use slirp4netns & fuse-overlayfs for stability in containers
-RUN mkdir -p /etc/containers && \
-    printf '[engine]\nevents_logger="file"\n' > /etc/containers/containers.conf
+# Default environment (also re-exported in setup.sh after CIEL finishes)
+ENV PDK_ROOT=/home/vscode/.ciel
+ENV PDK=sky130A
+ENV STD_CELL_LIBRARY=sky130_fd_sc_hd
 
-# log dir for supervisor
-RUN mkdir -p /var/log/supervisor
+# Keep using the vscode user
+USER vscode
 
-WORKDIR /workspaces
+# Helpful PATH for venvs you create in setup.sh
+ENV PATH="/home/vscode/.local/bin:${PATH}"
