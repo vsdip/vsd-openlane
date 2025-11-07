@@ -65,8 +65,25 @@ echo "[setup] Verifying docker is reachable inside the devcontainer"
 docker --version || { echo "[setup][warn] docker CLI not found"; true; }
 docker info >/dev/null 2>&1 || echo "[setup][note] Docker daemon will be ready after container restart (Devcontainer feature handles it)."
 
-echo "[setup] Done. To start OpenLane:"
+echo "[VSD OPENLANE CODESPACE SETUP] Done. To start OpenLane:"
 echo "  1) Open a new terminal (to load .bashrc), then run:"
 echo "       openlane"
 echo "     or:"
 echo "       cd \"$HOME/Desktop/OpenLane\" && ./flow.tcl -interactive"
+
+# --- Sync/link user designs into OpenLane ---
+WS="${REMOTE_CONTAINERS_WORKSPACE_FOLDER:-$PWD}"
+DESIGN_SRC="$WS/.openlane-designs/picorv32a"
+DESIGN_DST="$OPENLANE_DIR/designs/picorv32a"
+
+if [ -d "$DESIGN_SRC" ]; then
+  echo "[setup] Linking picorv32a into OpenLane designs"
+  mkdir -p "$(dirname "$DESIGN_DST")"
+  # Use a symlink so your repo remains the source of truth
+  rm -rf "$DESIGN_DST"
+  ln -s "$DESIGN_SRC" "$DESIGN_DST"
+  ls -l "$DESIGN_DST"
+else
+  echo "[setup] Skip: $DESIGN_SRC not found (create it in your repo to enable)"
+fi
+
