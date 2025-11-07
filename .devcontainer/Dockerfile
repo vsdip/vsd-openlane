@@ -29,7 +29,7 @@ ENV PATH="/home/vscode/.local/bin:${PATH}"
 # -----------------------------
 # noVNC desktop environment
 # -----------------------------
-COPY supervisord.conf /etc/supervisor/conf.d/vnc.conf
+RUN mkdir -p /var/log/supervisor
+COPY supervisord.conf /etc/supervisor/supervisord.conf
+COPY vnc.conf /etc/supervisor/conf.d/vnc.conf
 
-EXPOSE 6080
-CMD ["/usr/bin/supervisord", "-n"]
