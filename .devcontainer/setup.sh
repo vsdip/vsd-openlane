@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Remember where the script started (repo root when postCreateCommand runs)
+START_DIR="$(pwd)"
 
 # --- Config you can tweak ---
 OPENLANE_DIR="$HOME/Desktop/OpenLane"
