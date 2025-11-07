@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
  && rm -rf /var/lib/apt/lists/*
 
 # Copy the starter and make it executable (BuildKit handles perms)
-COPY --chmod=0755 .devcontainer/start-vnc.sh /usr/local/bin/start-vnc.sh
+COPY --chmod=0755 start-vnc.sh /usr/local/bin/start-vnc.sh
 
 # (Optional) If you want the container to run the VNC stack by default:
 # CMD ["/usr/local/bin/start-vnc.sh"]
