@@ -1,45 +1,19 @@
 {
-  "name": "OpenLane Codespace",
-  "image": "auto",
+  "name": "OpenLane Codespace (GUI + noVNC)",
   "build": {
     "dockerfile": "Dockerfile"
   },
-  "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {
-      "version": "latest"
-    }
-  },
-  "remoteUser": "vscode",
-
-  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind",
-  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-
-  "containerEnv": {
-    "DISPLAY": ":1"
-  },
-
   "forwardPorts": [6080],
   "portsAttributes": {
     "6080": {
-      "label": "noVNC (Magic)",
+      "label": "noVNC (Magic) Desktop",
       "onAutoForward": "openBrowser"
     }
   },
-
-  "postCreateCommand": "bash .devcontainer/setup.sh",
-
-  "postStartCommand": "nohup /usr/local/bin/start-vnc.sh >/tmp/vnc.log 2>&1 &",
-
-  "customizations": {
-    "vscode": {
-      "extensions": [
-        "ms-vscode.makefile-tools",
-        "ms-python.python"
-      ]
-    }
+  "overrideCommand": false,
+  "remoteUser": "root",
+  "containerEnv": {
+    "DISPLAY": ":1"
   },
-  "hostRequirements": {
-    "cpus": 4,
-    "memory": "8gb"
-  }
+  "postCreateCommand": "bash .devcontainer/setup.sh"
 }
