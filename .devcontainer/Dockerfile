@@ -25,4 +25,22 @@ USER vscode
 # Helpful PATH for venvs you create in setup.sh
 ENV PATH="/home/vscode/.local/bin:${PATH}"
 
+# --- existing content above ---
+
+# Ensure these are present (most likely already in your Dockerfile)
+# xfce4, xvfb, x11vnc, novnc, websockify should be installed.
+
+# Set a default display (used by Magic and the desktop)
+ENV DISPLAY=:1
+
+# Copy our startup script into the image
+COPY start-vnc.sh /usr/local/bin/start-vnc.sh
+RUN chmod +x /usr/local/bin/start-vnc.sh
+
+# Expose noVNC port
+EXPOSE 6080
+
+# Start the noVNC desktop on container boot (devcontainer.json uses overrideCommand:false)
+CMD ["/usr/local/bin/start-vnc.sh"]
+
 
