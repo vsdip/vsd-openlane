@@ -1,27 +1,28 @@
 {
-  "name": "OpenLane (superstable) – dind stable",
-  "build": { "dockerfile": "Dockerfile" },
+  "name": "OpenLane Codespace",
+  "image": "auto",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": { "version": "latest", "moby": false }
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest"
+    }
   },
   "remoteUser": "vscode",
-  "updateRemoteUserUID": true,
-  "mounts": [
-    "source=ol-pdk-cache,type=volume,target=/workspaces/.pdk",
-    "source=ol-docker-cache,type=volume,target=/var/lib/docker"
-  ],
-  "containerEnv": {
-    "OPENLANE_DIR": "/workspaces/OpenLane",
-    "WORKSHOP_HOME": "/home/vscode/Desktop/work",
-    "PDK_ROOT": "/workspaces/.pdk",
-    "PDK": "sky130A",
-    "STD_CELL_LIBRARY": "sky130_fd_sc_hd",
-    "DISPLAY": ":0",
-    "NOVNC_PORT": "6080"
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.makefile-tools",
+        "ms-python.python"
+      ]
+    }
   },
-  "forwardPorts": [6080],
-  "postCreateCommand": "bash .devcontainer/postcreate_min.sh",
-  "postStartCommand": "supervisord -c .devcontainer/supervisord.conf || true",
-  "overrideCommand": false,
-  "init": true
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "8gb"
+  }
 }
