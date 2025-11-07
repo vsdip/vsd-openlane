@@ -12,7 +12,18 @@
   "remoteUser": "vscode",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+
   "postCreateCommand": "bash .devcontainer/setup.sh",
+
+  // 👇 VNC / noVNC: forward and label the web UI port
+  "forwardPorts": [6080],
+  "portsAttributes": {
+    "6080": { "label": "noVNC", "onAutoForward": "openBrowser" }
+  },
+
+  // 👇 Start the virtual desktop stack automatically after the container starts
+  "postStartCommand": "nohup /usr/local/bin/start-vnc.sh > /var/log/novnc.log 2>&1 &",
+
   "customizations": {
     "vscode": {
       "extensions": [
