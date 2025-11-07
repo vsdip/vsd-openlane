@@ -1,6 +1,5 @@
 {
   "name": "OpenLane Codespace",
-  "image": "auto",
   "build": {
     "dockerfile": "Dockerfile"
   },
@@ -11,6 +10,8 @@
       "onAutoForward": "openBrowser"
     }
   },
+  "overrideCommand": false,
+  "remoteUser": "vscode",
   "containerEnv": {
     "DISPLAY": ":1"
   },
