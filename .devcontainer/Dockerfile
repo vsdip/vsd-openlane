@@ -8,8 +8,7 @@ SHELL ["/bin/bash", "-lc"]
 RUN apt-get update && apt-get install -y \
     git make curl ca-certificates \
     python3 python3-venv python3-pip \
-    tcl magic ngspice vim gedit less \
-    xfce4 xfce4-terminal x11vnc xvfb novnc websockify supervisor dbus-x11 \
+    tcl \
     && rm -rf /var/lib/apt/lists/*
 
 # Create Desktop folder (matches your path expectations)
@@ -25,12 +24,3 @@ USER vscode
 
 # Helpful PATH for venvs you create in setup.sh
 ENV PATH="/home/vscode/.local/bin:${PATH}"
-
-# -----------------------------
-# noVNC desktop environment
-# -----------------------------
-COPY supervisord.conf /etc/supervisor/conf.d/vnc.conf
-
-EXPOSE 6080
-CMD ["/usr/bin/supervisord", "-n"]
-
