@@ -8,7 +8,7 @@ SHELL ["/bin/bash", "-lc"]
 RUN apt-get update && apt-get install -y \
     git make curl ca-certificates \
     python3 python3-venv python3-pip \
-    tcl \
+    tcl xfce4 xfce4-terminal x11vnc xvfb novnc websockify supervisor dbus-x11 \
     && rm -rf /var/lib/apt/lists/*
 
 # Create Desktop folder (matches your path expectations)
