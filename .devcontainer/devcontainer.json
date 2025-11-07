@@ -9,6 +9,14 @@
       "version": "latest"
     }
   },
+  "forwardPorts": [6080],
+  "portsAttributes": {
+    "6080": {
+      "label": "noVNC Desktop",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "overrideCommand": false,
   "remoteUser": "vscode",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
@@ -20,6 +28,9 @@
         "ms-python.python"
       ]
     }
+  },
+  "containerEnv": {
+    "DISPLAY": ":1"
   },
   "hostRequirements": {
     "cpus": 4,
