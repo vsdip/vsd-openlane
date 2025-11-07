@@ -1,6 +1,5 @@
 {
   "name": "OpenLane Codespace",
-  "image": "auto",
   "build": {
     "dockerfile": "Dockerfile"
   },
