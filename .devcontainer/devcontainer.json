@@ -4,6 +4,13 @@
   "build": {
     "dockerfile": "Dockerfile"
   },
+  "forwardPorts": [6080],
+  "portsAttributes": {
+    "6080": {
+      "label": "noVNC Desktop",
+      "onAutoForward": "openBrowser"
+    }
+  },
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
       "version": "latest"
