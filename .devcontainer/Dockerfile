@@ -1,25 +1,23 @@
 # Simple, fast base for Codespaces
 FROM mcr.microsoft.com/devcontainers/base:ubuntu-22.04
 
+# Become root to install packages
+USER root
 ENV DEBIAN_FRONTEND=noninteractive
-SHELL ["/bin/bash", "-lc"]
 
-# Core deps: git, build tools, python venv, tcl for flow.tcl, plus quality-of-life tools
 RUN apt-get update && apt-get install -y \
-    git make curl ca-certificates \
-    python3 python3-venv python3-pip \
-    tcl xfce4 xfce4-terminal x11vnc xvfb novnc websockify supervisor dbus-x11 \
-    && rm -rf /var/lib/apt/lists/*
+    xvfb x11vnc novnc websockify \
+    xfce4 dbus-x11 xterm \
+    magic \
+ && rm -rf /var/lib/apt/lists/*
 
-# Create Desktop folder (matches your path expectations)
-RUN mkdir -p /home/vscode/Desktop && chown -R vscode:vscode /home/vscode/Desktop
+# Copy the starter and make it executable (BuildKit handles perms)
+COPY --chmod=0755 .devcontainer/start-vnc.sh /usr/local/bin/start-vnc.sh
 
-# Default environment (also re-exported in setup.sh after CIEL finishes)
-ENV PDK_ROOT=/home/vscode/.ciel
-ENV PDK=sky130A
-ENV STD_CELL_LIBRARY=sky130_fd_sc_hd
+# (Optional) If you want the container to run the VNC stack by default:
+# CMD ["/usr/local/bin/start-vnc.sh"]
 
-# Keep using the vscode user
+# Switch back to the devcontainer user
 USER vscode
 
 # Helpful PATH for venvs you create in setup.sh
