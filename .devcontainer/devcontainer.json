@@ -1,19 +1,21 @@
 {
   "name": "OpenLane Codespace (GUI + noVNC)",
-  "build": {
-    "dockerfile": "Dockerfile"
-  },
-  "forwardPorts": [6080],
-  "portsAttributes": {
-    "6080": {
-      "label": "noVNC (Magic) Desktop",
-      "onAutoForward": "openBrowser"
+  "build": { "dockerfile": "Dockerfile" },
+
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest"
     }
   },
-  "overrideCommand": false,
-  "remoteUser": "root",
-  "containerEnv": {
-    "DISPLAY": ":1"
+
+  "forwardPorts": [6080],
+  "portsAttributes": {
+    "6080": { "label": "noVNC (Magic) Desktop", "onAutoForward": "openBrowser" }
   },
+
+  "overrideCommand": false,
+  "remoteUser": "vscode",
+  "containerEnv": { "DISPLAY": ":1" },
+
   "postCreateCommand": "bash .devcontainer/setup.sh"
 }
