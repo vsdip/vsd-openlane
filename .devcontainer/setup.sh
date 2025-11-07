@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+START_DIR="$(pwd)"
 
 # --- Config you can tweak ---
 OPENLANE_DIR="$HOME/Desktop/OpenLane"
