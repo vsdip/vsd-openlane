@@ -19,6 +19,8 @@ RUN apt-get update && apt-get install -y \
 
 # Copy the starter and make it executable (BuildKit handles perms)
 COPY --chmod=0755 start-vnc.sh /usr/local/bin/start-vnc.sh
+# Expose noVNC (Codespaces will discover it and forward)
+EXPOSE 6080
 
 # (Optional) If you want the container to run the VNC stack by default:
 # CMD ["/usr/local/bin/start-vnc.sh"]
