@@ -1,42 +1,33 @@
-# Simple, fast base for Codespaces
+# Simple base (same as bandgap)
 FROM mcr.microsoft.com/devcontainers/base:ubuntu-22.04
-
-USER root
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Core deps: Python venv for setup.sh, VNC stack, desktop, build deps, Magic deps
-RUN apt-get update && apt-get install -y \
-    python3 python3-pip python3-venv \
-    xvfb x11vnc novnc websockify xfce4 dbus-x11 xterm \
-    build-essential wget ca-certificates \
-    tcl-dev tk-dev libcairo2-dev \
-    libx11-dev libxpm-dev libxext-dev libxrender-dev libx11-xcb-dev \
-    libreadline-dev libncurses-dev \
- && rm -rf /var/lib/apt/lists/*
+# --- System + GUI/VNC + build deps (mirrors bandgap) ---
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git build-essential autoconf automake libtool m4 \
+    tcl tcl-dev tk tk-dev libcairo2-dev libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev \
+    libx11-dev libxext-dev libxrender-dev libxpm-dev libxaw7-dev libcairo2-dev libfontconfig1-dev \
+    libreadline-dev libncurses-dev flex bison gawk tcsh \
+    python3 python3-pip python3-venv pkg-config curl ca-certificates \
+    xfce4 xfce4-terminal x11vnc xvfb novnc websockify supervisor dbus-x11 gedit vim \
+ && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# (Optional) Build/install Magic once in the image
-#RUN set -eux; \
-#    cd /tmp; \
-#    wget http://opencircuitdesign.com/magic/archive/magic-8.3.573.tgz; \
-#    tar xf magic-8.3.573.tgz; \
-#    cd magic-8.3.573; \
- #   ./configure; \
- #   make -j"$(nproc)"; \
- #   make install; \
- #   cd /; rm -rf /tmp/magic-8.3.573 /tmp/magic-8.3.573.tgz
+# --- Build and install MAGIC (requested) ---
+#WORKDIR /tmp/build
+#RUN git clone https://github.com/RTimothyEdwards/magic && \
+#    cd magic && \
+#    ./configure && \
+#    make -j"$(nproc)" && \
+#    make install && \
+#    cd / && rm -rf /tmp/build
 
-# Pre-create the X socket dir with correct perms; avoids Xvfb euid!=0 warning
+# --- noVNC desktop via supervisord (same pattern as bandgap) ---
+COPY supervisord.conf /etc/supervisor/conf.d/vnc.conf
+# Ensure X socket dir exists at runtime even if non-root runs Xvfb
 RUN mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
 
-# Copy the VNC starter (adjust path if your script lives under .devcontainer/)
-COPY --chmod=0755 start-vnc.sh /usr/local/bin/start-vnc.sh
-
-# Environment for X apps
-ENV DISPLAY=:1
-
-# noVNC port (Codespaces will auto-forward and label via devcontainer.json)
+# Codespaces discovers this
 EXPOSE 6080
 
-# Switch back to the devcontainer user
-USER vscode
-ENV PATH="/home/vscode/.local/bin:${PATH}"
+# Run the supervisor (keeps container alive)
+CMD ["/usr/bin/supervisord", "-n"]
