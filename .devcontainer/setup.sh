@@ -1,69 +1,72 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "[setup] START"
+# --- Config you can tweak ---
+OPENLANE_DIR="$HOME/Desktop/OpenLane"
+PDK_ROOT_DEFAULT="$HOME/.ciel"
+PDK_NAME="sky130A"
+STD_LIB="sky130_fd_sc_hd"
+# ----------------------------
 
-OPENLANE_DIR="${OPENLANE_DIR:-/workspaces/OpenLane}"
-PDK_ROOT="${PDK_ROOT:-/workspaces/.pdk}"
-PDK="${PDK:-sky130A}"
-STD_CELL_LIBRARY="${STD_CELL_LIBRARY:-sky130_fd_sc_hd}"
-WORKSHOP_HOME="${WORKSHOP_HOME:-/home/vscode/Desktop/work}"
-
-# For ciel helper
-export CIEL_HOME="${CIEL_HOME:-$OPENLANE_DIR/.ciel}"
-export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$OPENLANE_DIR/.cache}"
-
-mkdir -p "$OPENLANE_DIR" "$PDK_ROOT" "$CIEL_HOME" "$XDG_CACHE_HOME" "$WORKSHOP_HOME"
-
-# Workshop path: /home/vscode/Desktop/work/OpenLane -> /workspaces/OpenLane
-if [[ ! -e "$WORKSHOP_HOME/OpenLane" ]]; then
-  ln -s "$OPENLANE_DIR" "$WORKSHOP_HOME/OpenLane" || true
+echo "[setup] Ensuring docker CLI is present (feature provides daemon + group)"
+if ! command -v docker >/dev/null 2>&1; then
+  sudo apt-get update && sudo apt-get install -y docker.io
 fi
 
-# --- Clone/Update OpenLane (superstable) ---
-if [[ -d "$OPENLANE_DIR/.git" ]]; then
-  echo "[setup] Updating OpenLane @ superstable"
-  ( cd "$OPENLANE_DIR" && git fetch --depth=1 origin superstable && git checkout superstable && git reset --hard origin/superstable )
+# The Dev Container feature already handles docker group; just verify:
+if ! groups | grep -q docker; then
+  echo "[setup] Adding $(whoami) to docker group"
+  sudo usermod -aG docker "$(whoami)" || true
+fi
+
+echo "[setup] Cloning OpenLane (if missing) into $OPENLANE_DIR"
+if [ ! -d "$OPENLANE_DIR" ]; then
+  mkdir -p "$(dirname "$OPENLANE_DIR")"
+  git clone https://github.com/The-OpenROAD-Project/OpenLane.git "$OPENLANE_DIR"
 else
-  if [[ -d "$OPENLANE_DIR" && -n "$(ls -A "$OPENLANE_DIR" 2>/dev/null)" ]]; then
-    echo "[setup] Non-git dir at $OPENLANE_DIR; moving aside"
-    mv "$OPENLANE_DIR" "${OPENLANE_DIR}.bak_$(date +%s)"
-  fi
-  echo "[setup] Cloning OpenLane (superstable)"
-  git clone --depth=1 --branch superstable https://github.com/The-OpenROAD-Project/OpenLane.git "$OPENLANE_DIR"
+  echo "[setup] OpenLane already present, pulling latest..."
+  git -C "$OPENLANE_DIR" pull --rebase || true
 fi
 
-# --- Python venv for OpenLane helper scripts ---
-echo "[setup] Creating Python venv"
-python3 -m venv "$OPENLANE_DIR/venv"
-"$OPENLANE_DIR/venv/bin/pip" install --upgrade pip
-"$OPENLANE_DIR/venv/bin/pip" install --no-cache-dir -r "$OPENLANE_DIR/requirements.txt"
+cd "$OPENLANE_DIR"
 
-# --- Install matched PDK into /workspaces/.pdk ---
-echo "[setup] Installing matched PDK into $PDK_ROOT"
-export PDK_ROOT CIEL_HOME XDG_CACHE_HOME
-( cd "$OPENLANE_DIR" && make pdk )
+echo "[setup] Creating Python venv and installing requirements"
+python3 -m venv venv
+./venv/bin/pip install --upgrade pip
+./venv/bin/pip install -r requirements.txt
 
-# --- Pull OpenLane container image (via docker shim -> podman) ---
-echo "[setup] Pulling OpenLane image (podman)"
-( cd "$OPENLANE_DIR" && make pull-openlane ) || true
+echo "[setup] Installing a *matched* PDK via CIEL (this may take a while)"
+# make pdk invokes ./venv/bin/ciel to fetch the correct commits/tooling
+make pdk
 
-# --- Helpers ---
-PROFILE_SNIPPET="# OpenLane helpers
-export OPENLANE_DIR=\"$OPENLANE_DIR\"
-export PDK_ROOT=\"$PDK_ROOT\"
-export PDK=\"$PDK\"
-export STD_CELL_LIBRARY=\"$STD_CELL_LIBRARY\"
-export CIEL_HOME=\"$CIEL_HOME\"
-export XDG_CACHE_HOME=\"$XDG_CACHE_HOME\"
-alias ol-mount='cd \"$OPENLANE_DIR\" && make mount'
-alias ol-run='cd \"$OPENLANE_DIR\" && ./flow.tcl -design spm -overwrite -tag quick'
-"
-if ! grep -q 'OpenLane helpers' /home/vscode/.bashrc 2>/dev/null; then
-  echo "$PROFILE_SNIPPET" >> /home/vscode/.bashrc
+echo "[setup] Exporting canonical OpenLane env to your shell defaults"
+# Persist to .bashrc so interactive terminals inherit the right PDK automatically
+if ! grep -q "### OPENLANE-ENV-BEGIN" "$HOME/.bashrc" 2>/dev/null; then
+cat >> "$HOME/.bashrc" <<EOF
+
+### OPENLANE-ENV-BEGIN
+export PDK_ROOT="$PDK_ROOT_DEFAULT"
+export PDK="$PDK_NAME"
+export STD_CELL_LIBRARY="$STD_LIB"
+# Convenience alias to jump into OpenLane
+alias ol='cd "$HOME/Desktop/OpenLane"'
+# Fast launcher for interactive flow
+alias openlane='cd "$HOME/Desktop/OpenLane" && ./flow.tcl -interactive'
+### OPENLANE-ENV-END
+EOF
 fi
 
-echo "[setup] DONE"
-echo "OpenLane (workshop path): $WORKSHOP_HOME/OpenLane"
-echo "noVNC: https://localhost:${NOVNC_PORT:-6080}/vnc.html"
-echo "Use 'ol-mount' then run flows inside the container."
+# Export for current non-login shell too
+export PDK_ROOT="$PDK_ROOT_DEFAULT"
+export PDK="$PDK_NAME"
+export STD_CELL_LIBRARY="$STD_LIB"
+
+echo "[setup] Verifying docker is reachable inside the devcontainer"
+docker --version || { echo "[setup][warn] docker CLI not found"; true; }
+docker info >/dev/null 2>&1 || echo "[setup][note] Docker daemon will be ready after container restart (Devcontainer feature handles it)."
+
+echo "[setup] Done. To start OpenLane:"
+echo "  1) Open a new terminal (to load .bashrc), then run:"
+echo "       openlane"
+echo "     or:"
+echo "       cd \"$HOME/Desktop/OpenLane\" && ./flow.tcl -interactive"
