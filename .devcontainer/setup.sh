@@ -73,17 +73,15 @@ echo "       openlane"
 echo "     or:"
 echo "       cd \"$HOME/Desktop/OpenLane\" && ./flow.tcl -interactive"
 
-# --- Sync/link user designs into OpenLane ---
-# Prefer the repo root where we started; if Codespaces exposes the workspace env, use it.
+# --- Copy user design into OpenLane (instead of symlink) ---
 WS="${REMOTE_CONTAINERS_WORKSPACE_FOLDER:-$START_DIR}"
 DESIGN_SRC="$WS/.openlane-designs/picorv32a"
 DESIGN_DST="$OPENLANE_DIR/designs/picorv32a"
 
 if [ -d "$DESIGN_SRC" ]; then
-  echo "[setup] Linking picorv32a into OpenLane designs"
-  mkdir -p "$(dirname "$DESIGN_DST")"
-  rm -rf "$DESIGN_DST"
-  ln -s "$DESIGN_SRC" "$DESIGN_DST"
+  echo "[setup] Copying picorv32a into OpenLane designs"
+  mkdir -p "$DESIGN_DST"
+  rsync -a --delete "$DESIGN_SRC/" "$DESIGN_DST/"
   ls -l "$DESIGN_DST"
 else
   echo "[setup] Skip: $DESIGN_SRC not found (create it in your repo to enable)"
