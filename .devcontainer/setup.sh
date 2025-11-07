@@ -74,14 +74,14 @@ echo "     or:"
 echo "       cd \"$HOME/Desktop/OpenLane\" && ./flow.tcl -interactive"
 
 # --- Sync/link user designs into OpenLane ---
-WS="${REMOTE_CONTAINERS_WORKSPACE_FOLDER:-$PWD}"
+# Prefer the repo root where we started; if Codespaces exposes the workspace env, use it.
+WS="${REMOTE_CONTAINERS_WORKSPACE_FOLDER:-$START_DIR}"
 DESIGN_SRC="$WS/.openlane-designs/picorv32a"
 DESIGN_DST="$OPENLANE_DIR/designs/picorv32a"
 
 if [ -d "$DESIGN_SRC" ]; then
   echo "[setup] Linking picorv32a into OpenLane designs"
   mkdir -p "$(dirname "$DESIGN_DST")"
-  # Use a symlink so your repo remains the source of truth
   rm -rf "$DESIGN_DST"
   ln -s "$DESIGN_SRC" "$DESIGN_DST"
   ls -l "$DESIGN_DST"
