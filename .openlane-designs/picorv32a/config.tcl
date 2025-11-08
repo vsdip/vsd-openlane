@@ -17,4 +17,4 @@ set filename $::env(OPENLANE_ROOT)/designs/$::env(DESIGN_NAME)/$::env(PDK)_$::en
 if { [file exists $filename] == 1} {
         source $filename
 }
-
+set ::env(FP_CORE_UTIL) "10"
