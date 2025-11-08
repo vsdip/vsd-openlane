@@ -102,6 +102,15 @@ You can now visualize your design layout!
 ![DEF Read](images/10_defRead.jpg)
 
 ---
+Here’s the final line you can add to the end of your README:
+
+---
+
+If you see a layout view like the one below, it means your Codespace is working perfectly and your OpenLane–Magic setup is fully functional.
+
+![Layout View](images/11_layout.jpg)
+
+---
 
 ## ✅ That’s It!
 
