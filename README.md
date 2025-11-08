@@ -109,6 +109,54 @@ If you see a layout view like the one below, it means your Codespace is working 
 
 ---
 
+
+## 9. Running a Custom Design (Example: `picorv32a`)
+
+To run your own design, follow the same directory structure as shown in
+[`/.openlane-designs/picorv32a`](https://github.com/vsdip/vsd-openlane/tree/main/.openlane-designs/picorv32a).
+At minimum, your design folder should contain:
+
+* **config.tcl** – design configurations and environment settings
+* **src/** – RTL source files
+* **scripts/** – optional custom flow scripts
+
+Once you’ve created this folder, run the flow using:
+
+```bash
+cd ~/Desktop/OpenLane
+make mount
+```
+
+Then inside the container:
+
+```bash
+./flow.tcl -design picorv32a -verbose 1
+```
+
+![Steps to Run Custom Design](images/12_StepsToRunCustomDesignLikePicorv32a.jpg)
+
+After the run completes, open Magic to view the layout:
+
+```bash
+cd ~/Desktop/OpenLane/designs/picorv32a/runs/<RUN_NAME>/results/final/
+magic -T /home/vscode/.ciel/sky130A/libs.tech/magic/sky130A.tech
+```
+
+![Open Layout for Custom Design](images/13_StepsToOpenLayoutForCustomDesignLikePicorv32a.jpg)
+
+Inside Magic’s `tkcon` console, load the generated files:
+
+```tcl
+lef read ../../../tmp/merged.nom.lef
+def read ./def/picorv32a.def
+```
+
+You’ll see the **final routed layout** as shown below — this confirms your custom design has successfully completed through OpenLane.
+
+![Final Layout for Custom Design](images/14_FinalLayoutForCustomDesignLikePicorv32a.jpg)
+
+---
+
 ## ✅ That’s It!
 
 You’ve successfully:
@@ -125,4 +173,6 @@ You’ve successfully:
 * Use `make test` to re-run the design anytime.
 * Use `magic` to explore the layout, zoom in, and understand each cell.
 * No local installation needed — just your browser.
+
+
 
