@@ -92,7 +92,7 @@ magic -T /home/vscode/.ciel/sky130A/libs.tech/magic/sky130A.tech
 In Magic’s console, load the layout files:
 
 ```tcl
-lef read ../../../tmp/merged.nom.lef
+lef read ../../tmp/merged.nom.lef
 def read ./def/spm.def
 ```
 
@@ -147,7 +147,7 @@ magic -T /home/vscode/.ciel/sky130A/libs.tech/magic/sky130A.tech
 Inside Magic’s `tkcon` console, load the generated files:
 
 ```tcl
-lef read ../../../tmp/merged.nom.lef
+lef read ../../tmp/merged.nom.lef
 def read ./def/picorv32a.def
 ```
 
