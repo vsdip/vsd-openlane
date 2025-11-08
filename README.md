@@ -1,9 +1,4 @@
-Here’s a **concise and student-friendly GitHub README** you can directly place in your repo root (`README.md`).
-It references the images from your `/images` folder and clearly walks college students through using the VSD OpenLane Codespace.
-
----
-
-# 🚀 VSD OpenLane Codespace
+# VSD OpenLane Codespace
 
 A ready-to-use **cloud workspace** to learn and run **Physical Design using OpenLane and Magic** — right inside your browser.
 No installation needed. Works on any laptop.
@@ -125,6 +120,3 @@ You’ve successfully:
 * Use `magic` to explore the layout, zoom in, and understand each cell.
 * No local installation needed — just your browser.
 
----
-
-Would you like me to make this version auto-include the image links as **HTML `<img>` tags with width control (for a neater GitHub layout)**? It’ll look visually more compact on your repository page.
