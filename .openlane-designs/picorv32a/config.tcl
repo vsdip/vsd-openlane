@@ -4,7 +4,7 @@ set ::env(DESIGN_NAME) "picorv32a"
 set ::env(VERILOG_FILES) "./designs/picorv32a/src/picorv32a.v"
 set ::env(SDC_FILE) "./designs/picorv32a/src/picorv32a.sdc"
 
-set ::env(CLOCK_PERIOD) "10.000"
+set ::env(CLOCK_PERIOD) "12.000"
 set ::env(CLOCK_PORT) "clk"
 
 
