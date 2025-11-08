@@ -117,8 +117,8 @@ To run your own design, follow the same directory structure as shown in
 At minimum, your design folder should contain:
 
 * **config.tcl** – design configurations and environment settings
-* **src/** – RTL source files
-* **scripts/** – optional custom flow scripts
+* **src/** – RTL source files (sdc and verilog)
+
 
 Once you’ve created this folder, run the flow using:
 
